@@ -42,13 +42,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Run linter
+        run: npm run lint
+
       - name: Run database migrations / seeds
         run: node ./fixtures/seed.js
-        # Adapte selon ton script d'initialisation BDD
 
       - name: Start app server
         run: npm start &
-        # Assure-toi que 'npm start' lance ton app sur localhost:5000
 
       - name: Wait for app to be ready
         run: |
@@ -63,6 +64,6 @@ jobs:
       - name: Run Cypress tests
         uses: cypress-io/github-action@v5
         with:
-          start: npm start
+          run: npm start
           wait-on: http://localhost:5000
           wait-on-timeout: 60
