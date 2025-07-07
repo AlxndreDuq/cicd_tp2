@@ -35,7 +35,6 @@ describe('Page /submissions', () => {
     cy.request('/submissions').then((response) => {
       expect(response.status).to.eq(200);
       expect(response.body).to.be.an('array');
-      
       // Par exemple, on vérifie que chaque élément a bien un nom et un email
       if (response.body.length > 0) {
         expect(response.body[0]).to.have.property('name');
