@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:10.5
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: formdb
+        options: >-
+          --health-cmd "mysqladmin ping --silent"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Wait for MariaDB to be ready
+        run: |
+          until mysqladmin ping -h 127.0.0.1 --silent; do
+            echo "Waiting for MariaDB..."
+            sleep 5
+          done
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run database migrations / seeds
+        run: node ./fixtures/seed.js
+        # Adapte selon ton script d'initialisation BDD
+
+      - name: Start app server
+        run: npm start &
+        # Assure-toi que 'npm start' lance ton app sur localhost:5000
+
+      - name: Wait for app to be ready
+        run: |
+          until curl --silent http://localhost:5000; do
+            echo "Waiting for app..."
+            sleep 5
+          done
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v5
+        with:
+          start: npm start
+          wait-on: http://localhost:5000
+          wait-on-timeout: 60
